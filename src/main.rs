@@ -15,11 +15,21 @@ fn init_rayon() {
 
 fn main() -> Result<()> {
     init_rayon();
+    
+    let total_start = Instant::now();
+    
+    // Load and convert image once
+    let input_path = "images/LightRoom-7.jpg";
+    let img = image::open(input_path)?;
+    let rgb_img = img.to_rgb8();
+    
     let sizes = [1024, 2048, 4096];
     for &size in &sizes {
         println!("\nProcessing size: {}", size);
-        convert_jpg_to_cubemap("images/LightRoom-7.jpg", size, 95)?;
+        convert_jpg_to_cubemap(&rgb_img, size, 95)?;
     }
+    
+    println!("\nTotal processing time for all sizes: {:?}", total_start.elapsed());
     Ok(())
 }
 
@@ -74,17 +84,14 @@ fn cube_to_spherical(x: u32, y: u32, size: u32, face: &str) -> (f32, f32) {
     }
 }
 
-fn convert_jpg_to_cubemap(input_path: &str, size: u32, quality: u8) -> Result<()> {
+fn convert_jpg_to_cubemap(rgb_img: &image::RgbImage, size: u32, quality: u8) -> Result<()> {
     let start = Instant::now();
-    println!("Starting conversion: {} at {}x{}", input_path, size, size);
+    println!("Starting conversion at {}x{}", size, size);
 
-    // Load and convert image once
-    let img = image::open(input_path)?;
-    let rgb_img = img.to_rgb8();
     let width = rgb_img.width();
     let height = rgb_img.height();
     
-    println!("Image loaded in {:?}", start.elapsed());
+    println!("Starting processing at {:?}", start.elapsed());
     
     // Create output directory
     std::fs::create_dir_all(format!("output/cubemap_{}", size))?;
